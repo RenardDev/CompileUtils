@@ -105,7 +105,7 @@ namespace CryptoStringAES {
 			for (unsigned char c = 0; c < 4; ++c) {
 				const unsigned int unWord = RK[c];
 
-				m_State[4 * c + 0] ^= static_cast<unsigned char>((unWord >> 24) & 0xFF);
+				m_State[4 * c]     ^= static_cast<unsigned char>((unWord >> 24) & 0xFF);
 				m_State[4 * c + 1] ^= static_cast<unsigned char>((unWord >> 16) & 0xFF);
 				m_State[4 * c + 2] ^= static_cast<unsigned char>((unWord >>  8) & 0xFF);
 				m_State[4 * c + 3] ^= static_cast<unsigned char>( unWord        & 0xFF);
@@ -315,18 +315,18 @@ namespace CryptoStringAES {
 			lenblock[i] = static_cast<unsigned char>((unAADBits >> (56 - 8 * i)) & 0xFF);
 		}
 
-		for (unsigned char i = 0;i < 8;++i) {
+		for (unsigned char i = 0; i < 8; ++i) {
 			lenblock[8 + i] = static_cast<unsigned char>((unCipherBits >> (56 - 8 * i)) & 0xFF);
 		}
 
-		for (unsigned char i = 0;i < 16;++i) {
+		for (unsigned char i = 0; i < 16; ++i) {
 			S[i] ^= lenblock[i];
 		}
 
 		S = GF128MulBE(S, H);
 
 		const block16 ENC_J0 = AES256EncryptBlock(J0, ks);
-		for (unsigned char i = 0;i < 16;++i) {
+		for (unsigned char i = 0; i < 16; ++i) {
 			out.m_Tag[i] = static_cast<unsigned char>(ENC_J0[i] ^ S[i]);
 		}
 
@@ -502,7 +502,7 @@ namespace CryptoStringAES {
 
 			const unsigned long long kSelection[6] = { unA, unB, unC, unD, unE, unF };
 
-			for (unsigned char i = 0;i < 8;++i) {
+			for (unsigned char i = 0; i < 8; ++i) {
 				const unsigned long long unX = (i < 5) ? kSelection[i] : (unF * i);
 				const unsigned char unBase = static_cast<unsigned char>(i << 3);
 
