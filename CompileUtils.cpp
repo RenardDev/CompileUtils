@@ -25,6 +25,57 @@
 // ObfuscatedVariable (C++14)
 #include "ObfuscatedVariable.h"
 
+// RV32I (C++20)
+#include "RV32I.h"
+
+constexpr const char SOURCE_LOWERCASE[] = R"(
+    addi  t4, x0, 65
+    addi  t5, x0, 91
+    addi  t6, x0, 32
+.loop:
+    lb    t0, 0(a0)
+    beq   t0, x0, .done
+    blt   t0, t4, .store
+    bltu  t0, t5, .make
+    jal   x0, .store
+.make:
+    add   t0, t0, t6
+.store:
+    sb    t0, 0(a0)
+    addi  a0, a0, 1
+    jal   x0, .loop
+.done:
+    jal   x0, exit
+exit:
+)";
+
+#define RV32I_LOWERCASE(LIT) ([] {                                        \
+		constexpr char lit[] = LIT;                                       \
+		constexpr auto bytes = []<std::size_t M>(const char(&s)[M]) {     \
+			std::array<unsigned char, M> b {};                            \
+			for (std::size_t i = 0; i < M; ++i) {                         \
+				b[i] = static_cast<unsigned char>(s[i]);                  \
+			}                                                             \
+			return b;                                                     \
+		} (lit);                                                          \
+		constexpr auto ctx = [] {                                         \
+			rv32i::Context c {};                                          \
+			return c;                                                     \
+		} ();                                                             \
+		constexpr auto out = rv32i::Run(SOURCE_LOWERCASE, bytes, ctx);    \
+		static_assert(out.m_bOK, "lowercase VM runtime error");           \
+		return []<std::size_t M>(const std::array<unsigned char, M>& d) { \
+			std::array<char, M> s {};                                     \
+			for (std::size_t i = 0; i < M; ++i) {                         \
+				s[i] = static_cast<char>(d[i]);                           \
+			}                                                             \
+			return s;                                                     \
+		} (out.m_Execution.m_Data);                                       \
+	} ())
+
+constexpr auto lowered = RV32I_LOWERCASE("HELLO, WORLD!");
+static_assert(lowered[0] == 'h' && lowered[1] == 'e' && lowered[12] == '!', "lowercase failed");
+
 __forceinline int own_strcmp(const char* s1, const char* s2) noexcept {
 	const unsigned char* p1 = reinterpret_cast<const unsigned char*>(s1);
 	const unsigned char* p2 = reinterpret_cast<const unsigned char*>(s2);
@@ -34,7 +85,8 @@ __forceinline int own_strcmp(const char* s1, const char* s2) noexcept {
 			return 0;
 		}
 
-		++p1; ++p2;
+		++p1;
+		++p2;
 	}
 
 	return static_cast<int>(*p1) - static_cast<int>(*p2);

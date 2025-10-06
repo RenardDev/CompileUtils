@@ -21,3 +21,6 @@ Encrypts arrays at compiletime and decrypt at runtime
 
 ## ObfuscatedVariable.h (C++14 or less)
 Obfuscation of data in memory at runtime
+
+## RV32I.h
+RV32I emulator at compile time

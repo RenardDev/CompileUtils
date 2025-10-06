@@ -31,6 +31,7 @@
 // ----------------------------------------------------------------
 
 namespace CryptoArray {
+
 	template<class _Ty>
 	using clean_type = typename std::remove_const_t<std::remove_reference_t<_Ty>>;
 

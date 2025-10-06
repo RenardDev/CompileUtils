@@ -41,5 +41,8 @@
     <ClInclude Include="CompileCryptoArrayAES.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="RV32I.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
