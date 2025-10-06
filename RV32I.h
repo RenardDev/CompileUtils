@@ -192,7 +192,7 @@ namespace rv32i {
 		unsigned int m_Registers[32] {};
 		int m_nPC = -1;
 		std::size_t m_unSteps = 0;
-		std::array<unsigned char, DATA_BYTES>  m_Data {};
+		std::array<unsigned char, DATA_BYTES> m_Data {};
 		std::array<unsigned char, STACK_BYTES> m_Stack {};
 		unsigned int m_unStackBase = 0;
 	};
@@ -2147,7 +2147,7 @@ namespace rv32i {
 		}
 
 		constexpr ExecutionResult<DATA_BYTES, STACK_BYTES> Run(Context ctx) {
-			for (std::size_t i = 0; i < 32; ++i) {
+			for (unsigned char i = 0; i < 32; ++i) {
 				m_Result.m_Registers[i] = ctx.m_Registers[i];
 			}
 
