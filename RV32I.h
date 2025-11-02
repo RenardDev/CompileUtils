@@ -20,7 +20,7 @@ namespace rv32i {
 	// Constants / Limits
 	// =========================================================================
 
-	constexpr unsigned int DATA_BASE = 0x1000;
+	constexpr unsigned int DATA_BASE = 0x10000000;
 	constexpr unsigned int STACK_BASE = 0x80000000;
 
 	struct Limits {
