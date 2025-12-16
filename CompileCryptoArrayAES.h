@@ -17,14 +17,14 @@
 // ----------------------------------------------------------------
 
 #if defined(_MSC_VER)
-#define _CRYPOARRAYAES_NO_INLINE __declspec(noinline)
-#define _CRYPOARRAYAES_FORCE_INLINE __forceinline
+#define _CRYPTOARRAYAES_NO_INLINE __declspec(noinline)
+#define _CRYPTOARRAYAES_FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
-#define _CRYPOARRAYAES_NO_INLINE __attribute__((noinline))
-#define _CRYPOARRAYAES_FORCE_INLINE __attribute__((always_inline))
+#define _CRYPTOARRAYAES_NO_INLINE __attribute__((noinline))
+#define _CRYPTOARRAYAES_FORCE_INLINE __attribute__((always_inline))
 #else
-#define _CRYPOARRAYAES_NO_INLINE
-#define _CRYPOARRAYAES_FORCE_INLINE inline
+#define _CRYPTOARRAYAES_NO_INLINE
+#define _CRYPTOARRAYAES_FORCE_INLINE inline
 #endif
 
 // ----------------------------------------------------------------
@@ -344,7 +344,7 @@ namespace CryptoArrayAES {
 		return unDiff;
 	}
 
-	_CRYPOARRAYAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const std::array<unsigned char, 12>& iv, unsigned char* pPlainText) noexcept {
+	_CRYPTOARRAYAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const std::array<unsigned char, 12>& iv, unsigned char* pPlainText) noexcept {
 		const block16 zero {};
 		const AES256KeySchedule ks(key);
 		const block16 H = AES256EncryptBlock(zero, ks);
@@ -678,7 +678,7 @@ namespace CryptoArrayAES {
 	public:
 		class DecryptedArray {
 		public:
-			_CRYPOARRAYAES_FORCE_INLINE explicit DecryptedArray(const CryptoArrayAES& self) noexcept {
+			_CRYPTOARRAYAES_FORCE_INLINE explicit DecryptedArray(const CryptoArrayAES& self) noexcept {
 				std::array<unsigned char, 32> rawkey {};
 				BuildAESKey<unLine, unCounter>(rawkey.data());
 
@@ -713,14 +713,14 @@ namespace CryptoArrayAES {
 				}
 			}
 
-			_CRYPOARRAYAES_FORCE_INLINE ~DecryptedArray() noexcept {
+			_CRYPTOARRAYAES_FORCE_INLINE ~DecryptedArray() noexcept {
 				Clear();
 			}
 
 			DecryptedArray(const DecryptedArray&) = delete;
 			DecryptedArray& operator=(const DecryptedArray&) = delete;
 
-			_CRYPOARRAYAES_FORCE_INLINE DecryptedArray(DecryptedArray&& other) noexcept {
+			_CRYPTOARRAYAES_FORCE_INLINE DecryptedArray(DecryptedArray&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
 					m_pBuffer[i] = other.m_pBuffer[i];
 				}
@@ -728,7 +728,7 @@ namespace CryptoArrayAES {
 				other.Clear();
 			}
 
-			_CRYPOARRAYAES_FORCE_INLINE DecryptedArray& operator=(DecryptedArray&& other) noexcept {
+			_CRYPTOARRAYAES_FORCE_INLINE DecryptedArray& operator=(DecryptedArray&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
 						m_pBuffer[i] = other.m_pBuffer[i];
@@ -740,21 +740,21 @@ namespace CryptoArrayAES {
 				return *this;
 			}
 
-			_CRYPOARRAYAES_FORCE_INLINE T* data() noexcept { return m_pBuffer; }
-			_CRYPOARRAYAES_FORCE_INLINE const T* data() const noexcept { return m_pBuffer; }
-			_CRYPOARRAYAES_FORCE_INLINE std::size_t size() const noexcept { return kLength; }
-			_CRYPOARRAYAES_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_pBuffer[idx]; }
-			_CRYPOARRAYAES_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_pBuffer[idx]; }
-			_CRYPOARRAYAES_FORCE_INLINE T* begin() noexcept { return m_pBuffer; }
-			_CRYPOARRAYAES_FORCE_INLINE T* end() noexcept { return m_pBuffer + kLength; }
-			_CRYPOARRAYAES_FORCE_INLINE const T* begin() const noexcept { return m_pBuffer; }
-			_CRYPOARRAYAES_FORCE_INLINE const T* end() const noexcept { return m_pBuffer + kLength; }
+			_CRYPTOARRAYAES_FORCE_INLINE T* data() noexcept { return m_pBuffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* data() const noexcept { return m_pBuffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE std::size_t size() const noexcept { return kLength; }
+			_CRYPTOARRAYAES_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_pBuffer[idx]; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_pBuffer[idx]; }
+			_CRYPTOARRAYAES_FORCE_INLINE T* begin() noexcept { return m_pBuffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE T* end() noexcept { return m_pBuffer + kLength; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* begin() const noexcept { return m_pBuffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* end() const noexcept { return m_pBuffer + kLength; }
 
-			_CRYPOARRAYAES_FORCE_INLINE operator T* () noexcept { return data(); }
-			_CRYPOARRAYAES_FORCE_INLINE operator const T* () const noexcept { return data(); }
+			_CRYPTOARRAYAES_FORCE_INLINE operator T* () noexcept { return data(); }
+			_CRYPTOARRAYAES_FORCE_INLINE operator const T* () const noexcept { return data(); }
 
 		private:
-			_CRYPOARRAYAES_FORCE_INLINE void Clear() noexcept {
+			_CRYPTOARRAYAES_FORCE_INLINE void Clear() noexcept {
 				volatile T* p = m_pBuffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					p[i] = T {};
@@ -764,20 +764,20 @@ namespace CryptoArrayAES {
 			T m_pBuffer[kLength] {};
 		};
 
-		_CRYPOARRAYAES_FORCE_INLINE constexpr CryptoArrayAES(const T* pData) noexcept : m_EncryptedBlob(kBlobFrom(pData)) {}
-		_CRYPOARRAYAES_FORCE_INLINE DecryptedArray Decrypt() const noexcept { return DecryptedArray(*this); }
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr CryptoArrayAES(const T* pData) noexcept : m_EncryptedBlob(kBlobFrom(pData)) {}
+		_CRYPTOARRAYAES_FORCE_INLINE DecryptedArray Decrypt() const noexcept { return DecryptedArray(*this); }
 
 	private:
 		EncryptedBlob m_EncryptedBlob {};
 	};
 
 	template<unsigned long long unLine, unsigned long long unCounter, typename T, std::size_t N>
-	_CRYPOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const T(&arr)[N]) noexcept {
+	_CRYPTOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const T(&arr)[N]) noexcept {
 		return CryptoArrayAES<N, T, unLine, unCounter>(arr);
 	}
 
 	template<unsigned long long unLine, unsigned long long unCounter, typename T, std::size_t N>
-	_CRYPOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const std::array<T, N>& arr) noexcept {
+	_CRYPTOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const std::array<T, N>& arr) noexcept {
 		return CryptoArrayAES<N, T, unLine, unCounter>(arr.data());
 	}
 }
@@ -790,7 +790,7 @@ namespace CryptoArrayAES {
 
 #define CRYPTOARRAYAES(A) _CRYPTOARRAYAES(A)
 
-#undef _CRYPOARRAYAES_FORCE_INLINE
-#undef _CRYPOARRAYAES_NO_INLINE
+#undef _CRYPTOARRAYAES_FORCE_INLINE
+#undef _CRYPTOARRAYAES_NO_INLINE
 
 #endif // !_COMPILECRYPTOARRAYAES_H_

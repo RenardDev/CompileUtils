@@ -138,6 +138,7 @@
     <ClInclude Include="CompileTimeStamp.h" />
     <ClInclude Include="ObfuscatedVariable.h" />
     <ClInclude Include="RV32I.h" />
+    <ClInclude Include="CompileStackString.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,14 +16,14 @@
 // ----------------------------------------------------------------
 
 #if defined(_MSC_VER)
-#define _CRYPOSTRING_NO_INLINE __declspec(noinline)
-#define _CRYPOSTRING_FORCE_INLINE __forceinline
+#define _CRYPTOSTRING_NO_INLINE __declspec(noinline)
+#define _CRYPTOSTRING_FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
-#define _CRYPOSTRING_NO_INLINE __attribute__((noinline))
-#define _CRYPOSTRING_FORCE_INLINE __attribute__((always_inline))
+#define _CRYPTOSTRING_NO_INLINE __attribute__((noinline))
+#define _CRYPTOSTRING_FORCE_INLINE __attribute__((always_inline))
 #else
-#define _CRYPOSTRING_NO_INLINE
-#define _CRYPOSTRING_FORCE_INLINE inline
+#define _CRYPTOSTRING_NO_INLINE
+#define _CRYPTOSTRING_FORCE_INLINE inline
 #endif
 
 // ----------------------------------------------------------------
@@ -236,7 +236,7 @@ namespace CryptoString {
 	public:
 		class DecryptedString {
 		public:
-			_CRYPOSTRING_FORCE_INLINE explicit DecryptedString(const CryptoString& EncryptedString) noexcept {
+			_CRYPTOSTRING_FORCE_INLINE explicit DecryptedString(const CryptoString& EncryptedString) noexcept {
 				AdditionalKeyArray<unLine, unCounter> AdditionalKey {};
 
 				for (std::size_t i = 0; i < kLength; ++i) {
@@ -250,14 +250,14 @@ namespace CryptoString {
 				}
 			}
 
-			_CRYPOSTRING_FORCE_INLINE ~DecryptedString() noexcept {
+			_CRYPTOSTRING_FORCE_INLINE ~DecryptedString() noexcept {
 				Clear();
 			}
 
 			DecryptedString(const DecryptedString&) = delete;
 			DecryptedString& operator=(const DecryptedString&) = delete;
 
-			_CRYPOSTRING_FORCE_INLINE DecryptedString(DecryptedString&& other) noexcept {
+			_CRYPTOSTRING_FORCE_INLINE DecryptedString(DecryptedString&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
 					m_pBuffer[i] = other.m_pBuffer[i];
 				}
@@ -265,7 +265,7 @@ namespace CryptoString {
 				other.Clear();
 			}
 
-			_CRYPOSTRING_FORCE_INLINE DecryptedString& operator=(DecryptedString&& other) noexcept {
+			_CRYPTOSTRING_FORCE_INLINE DecryptedString& operator=(DecryptedString&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
 						m_pBuffer[i] = other.m_pBuffer[i];
@@ -277,13 +277,13 @@ namespace CryptoString {
 				return *this;
 			}
 
-			_CRYPOSTRING_FORCE_INLINE T* get() noexcept { return m_pBuffer; }
-			_CRYPOSTRING_FORCE_INLINE operator T* () noexcept { return get(); }
-			_CRYPOSTRING_FORCE_INLINE const T* c_str() const noexcept { return m_pBuffer; }
-			_CRYPOSTRING_FORCE_INLINE operator const T* () const noexcept { return c_str(); }
+			_CRYPTOSTRING_FORCE_INLINE T* get() noexcept { return m_pBuffer; }
+			_CRYPTOSTRING_FORCE_INLINE operator T* () noexcept { return get(); }
+			_CRYPTOSTRING_FORCE_INLINE const T* c_str() const noexcept { return m_pBuffer; }
+			_CRYPTOSTRING_FORCE_INLINE operator const T* () const noexcept { return c_str(); }
 
 		private:
-			_CRYPOSTRING_FORCE_INLINE void Clear() noexcept {
+			_CRYPTOSTRING_FORCE_INLINE void Clear() noexcept {
 				volatile T* pData = m_pBuffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					pData[i] = T {};
@@ -293,19 +293,19 @@ namespace CryptoString {
 			T m_pBuffer[kLength] {};
 		};
 
-		_CRYPOSTRING_FORCE_INLINE constexpr CryptoString(T* pData) noexcept {
+		_CRYPTOSTRING_FORCE_INLINE constexpr CryptoString(T* pData) noexcept {
 			AdditionalKeyArray<unLine, unCounter> AdditionalKey {};
 
 			for (std::size_t i = 0; i < kLength; ++i) {
 				const auto bytes = ToBytes<T>(pData[i]);
 				for (std::size_t k = 0; k < sizeof(T); ++k) {
 					const std::size_t j = i * sizeof(T) + k;
-					m_pStorage[j] = static_cast<unsigned char>(bytes[k] ^ kBaseKey[j % sizeof(kBaseKey)]	^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)]);
+					m_pStorage[j] = static_cast<unsigned char>(bytes[k] ^ kBaseKey[j % sizeof(kBaseKey)] ^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)]);
 				}
 			}
 		}
 
-		_CRYPOSTRING_FORCE_INLINE DecryptedString Decrypt() const noexcept {
+		_CRYPTOSTRING_FORCE_INLINE DecryptedString Decrypt() const noexcept {
 			return DecryptedString(*this);
 		}
 
@@ -323,7 +323,7 @@ namespace CryptoString {
 
 #define CRYPTOSTRING(S) _CRYPTOSTRING(S)
 
-#undef _CRYPOSTRING_FORCE_INLINE
-#undef _CRYPOSTRING_NO_INLINE
+#undef _CRYPTOSTRING_FORCE_INLINE
+#undef _CRYPTOSTRING_NO_INLINE
 
 #endif // !_COMPILECRYPTOSTRING_H_

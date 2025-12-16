@@ -13,6 +13,9 @@
 // CompileCryptoString (C++14)
 #include "CompileCryptoString.h"
 
+// CompileStackString (C++14)
+#include "CompileStackString.h"
+
 // CompileCryptoStringAES (C++20)
 #include "CompileCryptoStringAES.h"
 

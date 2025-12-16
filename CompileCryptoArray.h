@@ -16,14 +16,14 @@
 // ----------------------------------------------------------------
 
 #if defined(_MSC_VER)
-#define _CRYPOARRAY_NO_INLINE __declspec(noinline)
-#define _CRYPOARRAY_FORCE_INLINE __forceinline
+#define _CRYPTOARRAY_NO_INLINE __declspec(noinline)
+#define _CRYPTOARRAY_FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
-#define _CRYPOARRAY_NO_INLINE __attribute__((noinline))
-#define _CRYPOARRAY_FORCE_INLINE __attribute__((always_inline))
+#define _CRYPTOARRAY_NO_INLINE __attribute__((noinline))
+#define _CRYPTOARRAY_FORCE_INLINE __attribute__((always_inline))
 #else
-#define _CRYPOARRAY_NO_INLINE
-#define _CRYPOARRAY_FORCE_INLINE inline
+#define _CRYPTOARRAY_NO_INLINE
+#define _CRYPTOARRAY_FORCE_INLINE inline
 #endif
 
 // ----------------------------------------------------------------
@@ -234,7 +234,7 @@ namespace CryptoArray {
 	public:
 		class DecryptedArray {
 		public:
-			_CRYPOARRAY_FORCE_INLINE explicit DecryptedArray(const CryptoArray& Encrypted) noexcept {
+			_CRYPTOARRAY_FORCE_INLINE explicit DecryptedArray(const CryptoArray& Encrypted) noexcept {
 				AdditionalKeyArray<unLine, unCounter> AdditionalKey{};
 				for (std::size_t i = 0; i < kLength; ++i) {
 					std::array<unsigned char, sizeof(T)> tmp {};
@@ -247,14 +247,14 @@ namespace CryptoArray {
 				}
 			}
 
-			_CRYPOARRAY_FORCE_INLINE ~DecryptedArray() noexcept {
+			_CRYPTOARRAY_FORCE_INLINE ~DecryptedArray() noexcept {
 				Clear();
 			}
 
 			DecryptedArray(const DecryptedArray&) = delete;
 			DecryptedArray& operator=(const DecryptedArray&) = delete;
 
-			_CRYPOARRAY_FORCE_INLINE DecryptedArray(DecryptedArray&& other) noexcept {
+			_CRYPTOARRAY_FORCE_INLINE DecryptedArray(DecryptedArray&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
 					m_pBuffer[i] = other.m_pBuffer[i];
 				}
@@ -262,7 +262,7 @@ namespace CryptoArray {
 				other.Clear();
 			}
 
-			_CRYPOARRAY_FORCE_INLINE DecryptedArray& operator=(DecryptedArray&& other) noexcept {
+			_CRYPTOARRAY_FORCE_INLINE DecryptedArray& operator=(DecryptedArray&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
 						m_pBuffer[i] = other.m_pBuffer[i];
@@ -274,21 +274,21 @@ namespace CryptoArray {
 				return *this;
 			}
 
-			_CRYPOARRAY_FORCE_INLINE T* data() noexcept { return m_pBuffer; }
-			_CRYPOARRAY_FORCE_INLINE const T* data() const noexcept { return m_pBuffer; }
-			_CRYPOARRAY_FORCE_INLINE std::size_t size() const noexcept { return kLength; }
-			_CRYPOARRAY_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_pBuffer[idx]; }
-			_CRYPOARRAY_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_pBuffer[idx]; }
-			_CRYPOARRAY_FORCE_INLINE T* begin() noexcept { return m_pBuffer; }
-			_CRYPOARRAY_FORCE_INLINE T* end() noexcept { return m_pBuffer + kLength; }
-			_CRYPOARRAY_FORCE_INLINE const T* begin() const noexcept { return m_pBuffer; }
-			_CRYPOARRAY_FORCE_INLINE const T* end() const noexcept { return m_pBuffer + kLength; }
+			_CRYPTOARRAY_FORCE_INLINE T* data() noexcept { return m_pBuffer; }
+			_CRYPTOARRAY_FORCE_INLINE const T* data() const noexcept { return m_pBuffer; }
+			_CRYPTOARRAY_FORCE_INLINE std::size_t size() const noexcept { return kLength; }
+			_CRYPTOARRAY_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_pBuffer[idx]; }
+			_CRYPTOARRAY_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_pBuffer[idx]; }
+			_CRYPTOARRAY_FORCE_INLINE T* begin() noexcept { return m_pBuffer; }
+			_CRYPTOARRAY_FORCE_INLINE T* end() noexcept { return m_pBuffer + kLength; }
+			_CRYPTOARRAY_FORCE_INLINE const T* begin() const noexcept { return m_pBuffer; }
+			_CRYPTOARRAY_FORCE_INLINE const T* end() const noexcept { return m_pBuffer + kLength; }
 
-			_CRYPOARRAY_FORCE_INLINE operator T* () noexcept { return data(); }
-			_CRYPOARRAY_FORCE_INLINE operator const T* () const noexcept { return data(); }
+			_CRYPTOARRAY_FORCE_INLINE operator T* () noexcept { return data(); }
+			_CRYPTOARRAY_FORCE_INLINE operator const T* () const noexcept { return data(); }
 
 		private:
-			_CRYPOARRAY_FORCE_INLINE void Clear() noexcept {
+			_CRYPTOARRAY_FORCE_INLINE void Clear() noexcept {
 				volatile T* pData = m_pBuffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					pData[i] = T {};
@@ -298,7 +298,7 @@ namespace CryptoArray {
 			T m_pBuffer[kLength] {};
 		};
 
-		_CRYPOARRAY_FORCE_INLINE constexpr CryptoArray(const T* pData) noexcept {
+		_CRYPTOARRAY_FORCE_INLINE constexpr CryptoArray(const T* pData) noexcept {
 			static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable for bytestream obfuscation");
 			AdditionalKeyArray<unLine, unCounter> AdditionalKey{};
 			for (std::size_t i = 0; i < kLength; ++i) {
@@ -310,7 +310,7 @@ namespace CryptoArray {
 			}
 		}
 
-		_CRYPOARRAY_FORCE_INLINE DecryptedArray Decrypt() const noexcept {
+		_CRYPTOARRAY_FORCE_INLINE DecryptedArray Decrypt() const noexcept {
 			return DecryptedArray(*this);
 		}
 
@@ -319,12 +319,12 @@ namespace CryptoArray {
 	};
 
 	template<unsigned long long unLine, unsigned long long unCounter, typename T, std::size_t N>
-	_CRYPOARRAY_FORCE_INLINE constexpr auto MakeCryptoArray(const T(&arr)[N]) noexcept {
+	_CRYPTOARRAY_FORCE_INLINE constexpr auto MakeCryptoArray(const T(&arr)[N]) noexcept {
 		return CryptoArray<N, T, unLine, unCounter>(arr);
 	}
 
 	template<unsigned long long unLine, unsigned long long unCounter, typename T, std::size_t N>
-	_CRYPOARRAY_FORCE_INLINE constexpr auto MakeCryptoArray(const std::array<T, N>& arr) noexcept {
+	_CRYPTOARRAY_FORCE_INLINE constexpr auto MakeCryptoArray(const std::array<T, N>& arr) noexcept {
 		return CryptoArray<N, T, unLine, unCounter>(arr.data());
 	}
 }
@@ -337,7 +337,7 @@ namespace CryptoArray {
 
 #define CRYPTOARRAY(A) _CRYPTOARRAY(A)
 
-#undef _CRYPOARRAY_FORCE_INLINE
-#undef _CRYPOARRAY_NO_INLINE
+#undef _CRYPTOARRAY_FORCE_INLINE
+#undef _CRYPTOARRAY_NO_INLINE
 
 #endif // !_COMPILECRYPTOARRAY_H_

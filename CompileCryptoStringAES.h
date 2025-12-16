@@ -15,14 +15,14 @@
 // ----------------------------------------------------------------
 
 #if defined(_MSC_VER)
-#define _CRYPOSTRINGAES_NO_INLINE __declspec(noinline)
-#define _CRYPOSTRINGAES_FORCE_INLINE __forceinline
+#define _CRYPTOSTRINGAES_NO_INLINE __declspec(noinline)
+#define _CRYPTOSTRINGAES_FORCE_INLINE __forceinline
 #elif defined(__GNUC__) || defined(__clang__)
-#define _CRYPOSTRINGAES_NO_INLINE __attribute__((noinline))
-#define _CRYPOSTRINGAES_FORCE_INLINE __attribute__((always_inline))
+#define _CRYPTOSTRINGAES_NO_INLINE __attribute__((noinline))
+#define _CRYPTOSTRINGAES_FORCE_INLINE __attribute__((always_inline))
 #else
-#define _CRYPOSTRINGAES_NO_INLINE
-#define _CRYPOSTRINGAES_FORCE_INLINE inline
+#define _CRYPTOSTRINGAES_NO_INLINE
+#define _CRYPTOSTRINGAES_FORCE_INLINE inline
 #endif
 
 // ----------------------------------------------------------------
@@ -342,7 +342,7 @@ namespace CryptoStringAES {
 		return unDiff;
 	}
 
-	_CRYPOSTRINGAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const std::array<unsigned char, 12>& iv, unsigned char* pPlainText) noexcept {
+	_CRYPTOSTRINGAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const std::array<unsigned char, 12>& iv, unsigned char* pPlainText) noexcept {
 		const block16 zero {};
 		const AES256KeySchedule ks(key);
 		const block16 H = AES256EncryptBlock(zero, ks);
@@ -677,7 +677,7 @@ namespace CryptoStringAES {
 	public:
 		class DecryptedString {
 		public:
-			_CRYPOSTRINGAES_FORCE_INLINE explicit DecryptedString(const CryptoStringAES& self) noexcept {
+			_CRYPTOSTRINGAES_FORCE_INLINE explicit DecryptedString(const CryptoStringAES& self) noexcept {
 				std::array<unsigned char, 32> rawkey {};
 				BuildAESKey<unLine, unCounter>(rawkey.data());
 
@@ -712,14 +712,14 @@ namespace CryptoStringAES {
 				}
 			}
 
-			_CRYPOSTRINGAES_FORCE_INLINE ~DecryptedString() noexcept {
+			_CRYPTOSTRINGAES_FORCE_INLINE ~DecryptedString() noexcept {
 				Clear();
 			}
 
 			DecryptedString(const DecryptedString&) = delete;
 			DecryptedString& operator=(const DecryptedString&) = delete;
 
-			_CRYPOSTRINGAES_FORCE_INLINE DecryptedString(DecryptedString&& other) noexcept {
+			_CRYPTOSTRINGAES_FORCE_INLINE DecryptedString(DecryptedString&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
 					m_pBuffer[i] = other.m_pBuffer[i];
 				}
@@ -727,7 +727,7 @@ namespace CryptoStringAES {
 				other.Clear();
 			}
 
-			_CRYPOSTRINGAES_FORCE_INLINE DecryptedString& operator=(DecryptedString&& other) noexcept {
+			_CRYPTOSTRINGAES_FORCE_INLINE DecryptedString& operator=(DecryptedString&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
 						m_pBuffer[i] = other.m_pBuffer[i];
@@ -739,13 +739,13 @@ namespace CryptoStringAES {
 				return *this;
 			}
 
-			_CRYPOSTRINGAES_FORCE_INLINE T* get() noexcept { return m_pBuffer; }
-			_CRYPOSTRINGAES_FORCE_INLINE operator T* () noexcept { return get(); }
-			_CRYPOSTRINGAES_FORCE_INLINE const T* c_str() const noexcept { return m_pBuffer; }
-			_CRYPOSTRINGAES_FORCE_INLINE operator const T* () const noexcept { return c_str(); }
+			_CRYPTOSTRINGAES_FORCE_INLINE T* get() noexcept { return m_pBuffer; }
+			_CRYPTOSTRINGAES_FORCE_INLINE operator T* () noexcept { return get(); }
+			_CRYPTOSTRINGAES_FORCE_INLINE const T* c_str() const noexcept { return m_pBuffer; }
+			_CRYPTOSTRINGAES_FORCE_INLINE operator const T* () const noexcept { return c_str(); }
 
 		private:
-			_CRYPOSTRINGAES_FORCE_INLINE void Clear() noexcept {
+			_CRYPTOSTRINGAES_FORCE_INLINE void Clear() noexcept {
 				volatile T* pData = m_pBuffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					pData[i] = T {};
@@ -755,8 +755,8 @@ namespace CryptoStringAES {
 			T m_pBuffer[kLength] {};
 		};
 
-		_CRYPOSTRINGAES_FORCE_INLINE constexpr CryptoStringAES(T* pData) noexcept : m_EncryptedBlob(kBlobFrom(pData)) {}
-		_CRYPOSTRINGAES_FORCE_INLINE DecryptedString Decrypt() const noexcept { return DecryptedString(*this); }
+		_CRYPTOSTRINGAES_FORCE_INLINE constexpr CryptoStringAES(T* pData) noexcept : m_EncryptedBlob(kBlobFrom(pData)) {}
+		_CRYPTOSTRINGAES_FORCE_INLINE DecryptedString Decrypt() const noexcept { return DecryptedString(*this); }
 
 	private:
 		EncryptedBlob m_EncryptedBlob {};
@@ -772,7 +772,7 @@ namespace CryptoStringAES {
 
 #define CRYPTOSTRINGAES(S) _CRYPTOSTRINGAES(S)
 
-#undef _CRYPOSTRINGAES_FORCE_INLINE
-#undef _CRYPOSTRINGAES_NO_INLINE
+#undef _CRYPTOSTRINGAES_FORCE_INLINE
+#undef _CRYPTOSTRINGAES_NO_INLINE
 
 #endif // _COMPILECRYPTOSTRINGAES_H_
