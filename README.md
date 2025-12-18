@@ -7,6 +7,9 @@ UNIX timestamp at compiletime
 ## CompileHashString.h (C++14)
 CRC32/CRC64 for strings at compiletime
 
+## CompileStackString.h (C++14)
+Allocates a string within the stack
+
 ## CompileCryptoString.h (XOR) (C++14)
 Encrypts strings at compiletime and decrypts at runtime
 

@@ -95,7 +95,7 @@ __forceinline int own_strcmp(const char* s1, const char* s2) noexcept {
 	return static_cast<int>(*p1) - static_cast<int>(*p2);
 }
 
-constexpr int kArray[] = {
+constexpr unsigned int kArray[] = {
 	HASHSTRING32("Hello"),
 	0,
 	HASHSTRING32(L"World")
@@ -106,7 +106,7 @@ int main() {
 	std::string EnteredPassword;
 	std::getline(std::cin, EnteredPassword);
 
-	std::cout << CRYPTOSTRING("Your password: ") << EnteredPassword << std::endl;
+	std::cout << STACKSTRING("Your password: ") << EnteredPassword << std::endl;
 
 	if (own_strcmp(EnteredPassword.c_str(), CRYPTOSTRING("SecureLogon32")) == 0) {
 		std::wcout << CRYPTOSTRINGAES(L"Access granted!").c_str() << std::endl;
@@ -114,8 +114,8 @@ int main() {
 		std::wcout << CRYPTOSTRINGAES(L"Access denied! Incorrect password.").c_str() << std::endl;
 	}
 
-	auto arr = CRYPTOARRAYAES(kArray);
-	ObfuscatedVariable<int> obfInt = arr[1];
+	auto arr = CRYPTOARRAY(kArray);
+	ObfuscatedVariable<unsigned int> obfInt = arr[1];
 
 	std::getchar();
 

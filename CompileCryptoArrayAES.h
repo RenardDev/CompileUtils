@@ -5,8 +5,6 @@
 
 // STL
 #include <type_traits>
-#include <array>
-#include <bit>
 
 // CompileTimeStamp
 #define COMPILETIMESTAMP_USE_64BIT
@@ -33,15 +31,29 @@
 
 namespace CryptoArrayAES {
 
-	template<class _Ty>
-	using clean_type = typename std::remove_const_t<std::remove_reference_t<_Ty>>;
+	template<class T>
+	using clean_type = std::remove_const_t<std::remove_reference_t<T>>;
 
-	using block16 = std::array<unsigned char, 16>;
-	using block32 = std::array<unsigned char, 32>;
+	template<std::size_t N>
+	struct Bytes {
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr unsigned char* data() noexcept { return m_Data; }
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr const unsigned char* data() const noexcept { return m_Data; }
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr std::size_t size() const noexcept { return N; }
 
-	constexpr static std::array<unsigned char, 9> kAAD {{ 'R', 'e', 'n', 'a', 'r', 'd', 'D', 'e', 'v' }}; // RenardDev
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr unsigned char& operator[](std::size_t i) noexcept { return m_Data[i]; }
+		_CRYPTOARRAYAES_FORCE_INLINE constexpr const unsigned char& operator[](std::size_t i) const noexcept { return m_Data[i]; }
 
-	constexpr static std::array<unsigned char, 256> kIBS {{
+		unsigned char m_Data[N] {};
+	};
+
+	using block16 = Bytes<16>;
+	using block32 = Bytes<32>;
+	using iv12 = Bytes<12>;
+
+	constexpr static unsigned char kAAD[10] = { 'R', 'e', 'n', 'a', 'r', 'd', 'D', 'e', 'v', '\0' }; // RenardDev
+	constexpr static std::size_t kAADSize = sizeof(kAAD);
+
+	constexpr static unsigned char kIBS[256] = {
 		0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB,
 		0x76, 0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4,
 		0x72, 0xC0, 0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71,
@@ -59,15 +71,15 @@ namespace CryptoArrayAES {
 		0x66, 0x48, 0x03, 0xF6, 0x0E, 0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E, 0xE1, 0xF8,
 		0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF, 0x8C,
 		0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
-	}};
+	};
 
-	constexpr static std::array<unsigned int, 15> kRCON {{
+	constexpr static unsigned int kRCON[15] = {
 		0x00000000, 0x01000000, 0x02000000,
 		0x04000000, 0x08000000, 0x10000000,
 		0x20000000, 0x40000000, 0x80000000,
 		0x1B000000, 0x36000000, 0x6C000000,
 		0xD8000000, 0xAB000000, 0x4D000000
-	}};
+	};
 
 	class AESState {
 	public:
@@ -89,7 +101,7 @@ namespace CryptoArrayAES {
 
 		constexpr void MixColumns() noexcept {
 			for (unsigned char c = 0; c < 4; ++c) {
-				const unsigned char i = 4 * c;
+				const unsigned char i = static_cast<unsigned char>(4 * c);
 
 				const unsigned char a0 = m_State[i];
 				const unsigned char a1 = m_State[i + 1];
@@ -136,7 +148,6 @@ namespace CryptoArrayAES {
 			return unR;
 		}
 
-
 	public:
 		block16 m_State {};
 	};
@@ -144,6 +155,7 @@ namespace CryptoArrayAES {
 	class AES256KeySchedule {
 	public:
 		constexpr AES256KeySchedule() noexcept = default;
+
 		constexpr explicit AES256KeySchedule(const block32& key) noexcept {
 			for (unsigned char i = 0; i < 8; ++i) {
 				m_Words[i] = _be32(&key[4 * i]);
@@ -151,8 +163,10 @@ namespace CryptoArrayAES {
 
 			for (unsigned char i = 8; i < 60; ++i) {
 				unsigned int unT = m_Words[i - 1];
+
 				if (i % 8 == 0) {
 					const unsigned int unRot = (unT << 8) | (unT >> 24);
+
 					const unsigned int unSub = (static_cast<unsigned int>(kIBS[(unRot >> 24) & 0xFF]) << 24) |
 											   (static_cast<unsigned int>(kIBS[(unRot >> 16) & 0xFF]) << 16) |
 											   (static_cast<unsigned int>(kIBS[(unRot >>  8) & 0xFF]) <<  8) |
@@ -182,7 +196,7 @@ namespace CryptoArrayAES {
 		}
 
 	public:
-		std::array<unsigned int, 60> m_Words {};
+		unsigned int m_Words[60] {};
 	};
 
 	constexpr block16 AES256EncryptBlock(const block16& in, const AES256KeySchedule& ks) noexcept {
@@ -208,8 +222,9 @@ namespace CryptoArrayAES {
 		block16 V = Y;
 
 		for (unsigned char unBit = 0; unBit < 128; ++unBit) {
-			const unsigned char unBI = unBit / 8;
-			const char nB7 = 7 - (unBit % 8);
+			const unsigned char unBI = static_cast<unsigned char>(unBit / 8);
+			const char nB7 = static_cast<char>(7 - (unBit % 8));
+
 			if (((X[unBI] >> nB7) & 1) != 0) {
 				for (unsigned char i = 0; i < 16; ++i) {
 					Z[i] ^= V[i];
@@ -219,11 +234,11 @@ namespace CryptoArrayAES {
 			const bool bLSB = (V[15] & 1) != 0;
 
 			for (char j = 15; j > 0; --j) {
-				V[j] = static_cast<unsigned char>((V[j] >> 1) | ((V[j - 1] & 1) << 7));
+				V[static_cast<unsigned char>(j)] = static_cast<unsigned char>((V[static_cast<unsigned char>(j)] >> 1) | ((V[static_cast<unsigned char>(j - 1)] & 1) << 7));
 			}
 
 			V[0] >>= 1;
-		
+
 			if (bLSB) {
 				V[0] ^= 0xE1;
 			}
@@ -253,21 +268,21 @@ namespace CryptoArrayAES {
 	template <std::size_t unDataSize>
 	struct GCMResult {
 		std::size_t m_CipherTextSize = unDataSize;
-		std::array<unsigned char, unDataSize> m_CipherText {};
+		unsigned char m_CipherText[unDataSize] {};
 		block16 m_Tag {};
 		constexpr GCMResult() noexcept = default;
 	};
 
 	constexpr void inc32_inplace(block16& ctr) noexcept {
 		for (char i = 15; i >= 12; --i) {
-			if (++ctr[i] != 0) {
+			if (++ctr[static_cast<unsigned char>(i)] != 0) {
 				break;
 			}
 		}
 	}
 
 	template <std::size_t unDataSize, std::size_t unAADSize = 0>
-	constexpr GCMResult<unDataSize> GCMEncrypt(const unsigned char* pPlainText, const unsigned char* pAAD, const block32& key, const std::array<unsigned char, 12>& iv) noexcept {
+	constexpr GCMResult<unDataSize> GCMEncrypt(const unsigned char* pPlainText, const unsigned char* pAAD, const block32& key, const iv12& iv) noexcept {
 		GCMResult<unDataSize> out {};
 
 		const block16 zero {};
@@ -277,8 +292,9 @@ namespace CryptoArrayAES {
 		block16 J0 {};
 		for (unsigned char i = 0; i < 12; ++i) {
 			J0[i] = iv[i];
-			J0[15] = 1;
 		}
+
+		J0[15] = 1;
 
 		block16 ctr = J0;
 		block16 keystream {};
@@ -305,7 +321,7 @@ namespace CryptoArrayAES {
 		}
 
 		if (out.m_CipherTextSize) {
-			GHashAccamulate(H, out.m_CipherText.data(), out.m_CipherTextSize, S);
+			GHashAccamulate(H, out.m_CipherText, out.m_CipherTextSize, S);
 		}
 
 		block16 lenblock {};
@@ -344,7 +360,7 @@ namespace CryptoArrayAES {
 		return unDiff;
 	}
 
-	_CRYPTOARRAYAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const std::array<unsigned char, 12>& iv, unsigned char* pPlainText) noexcept {
+	_CRYPTOARRAYAES_FORCE_INLINE bool GCMDecrypt(const unsigned char* pCipherText, std::size_t unCipherTextSize, const unsigned char* pAAD, std::size_t unAADSize, const block16& tag, const block32& key, const iv12& iv, unsigned char* pPlainText) noexcept {
 		const block16 zero {};
 		const AES256KeySchedule ks(key);
 		const block16 H = AES256EncryptBlock(zero, ks);
@@ -352,11 +368,13 @@ namespace CryptoArrayAES {
 		block16 J0 {};
 		for (unsigned char i = 0; i < 12; ++i) {
 			J0[i] = iv[i];
-			J0[15] = 1;
 		}
+
+		J0[15] = 1;
 
 		block16 ctr = J0;
 		block16 keysteam {};
+
 		for (std::size_t unOffset = 0; unOffset < unCipherTextSize; unOffset += 16) {
 			inc32_inplace(ctr);
 			keysteam = AES256EncryptBlock(ctr, ks);
@@ -456,37 +474,37 @@ namespace CryptoArrayAES {
 	constexpr static State s6 = UpdateState(     s5, __UNIX_TIMESTAMP_YEARS__  );
 	constexpr static State s7 = UpdateState(     s6, 0xDEADFACE);
 
-	constexpr static std::array<unsigned char, 32> kBaseKey = {
+	constexpr static unsigned char kBaseKey[32] = {
 		static_cast<unsigned char>( s6.s0        & 0xFF),
-		static_cast<unsigned char>((s6.s0 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s0 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s0 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s0 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s1        & 0xFF),
-		static_cast<unsigned char>((s6.s1 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s1 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s1 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s1 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s2        & 0xFF),
-		static_cast<unsigned char>((s6.s2 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s2 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s2 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s2 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s3        & 0xFF),
-		static_cast<unsigned char>((s6.s3 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s3 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s3 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s3 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s0        & 0xFF),
-		static_cast<unsigned char>((s7.s0 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s0 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s0 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s0 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s1        & 0xFF),
-		static_cast<unsigned char>((s7.s1 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s1 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s1 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s1 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s2        & 0xFF),
-		static_cast<unsigned char>((s7.s2 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s2 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s2 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s2 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s3        & 0xFF),
-		static_cast<unsigned char>((s7.s3 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s3 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s3 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s3 >> 24) & 0xFF)
 	};
@@ -495,27 +513,27 @@ namespace CryptoArrayAES {
 	class AdditionalKeyArrayAES {
 	public:
 		constexpr AdditionalKeyArrayAES() noexcept {
-			constexpr unsigned long long unA = hash64(rotr64(unLine,          13));
+			constexpr unsigned long long unA = hash64(rotr64(unLine, 13));
 			constexpr unsigned long long unB = hash64(rotr64(unA ^ unCounter, 31));
-			constexpr unsigned long long unC = hash64(rotr64(unB + unLine,    17));
+			constexpr unsigned long long unC = hash64(rotr64(unB + unLine, 17));
 			constexpr unsigned long long unD = hash64(rotr64(unC ^ unCounter, 47));
-			constexpr unsigned long long unE = hash64(rotr64(unD ^ unLine,    23));
+			constexpr unsigned long long unE = hash64(rotr64(unD ^ unLine, 23));
 			constexpr unsigned long long unF = hash64(rotr64(unE + unCounter, 37));
 
-			const unsigned long long kSelection[6] = { unA, unB, unC, unD, unE, unF };
+			constexpr unsigned long long kSelection[6] = { unA, unB, unC, unD, unE, unF };
 
 			for (unsigned char i = 0; i < 8; ++i) {
 				const unsigned long long unX = (i < 5) ? kSelection[i] : (unF * i);
 				const unsigned char unBase = static_cast<unsigned char>(i << 3);
 
-				m_Data[unBase]     = static_cast<unsigned char>( unX        & 0xFFu);
-				m_Data[unBase + 1] = static_cast<unsigned char>((unX >>  8) & 0xFFu);
-				m_Data[unBase + 2] = static_cast<unsigned char>((unX >> 16) & 0xFFu);
-				m_Data[unBase + 3] = static_cast<unsigned char>((unX >> 24) & 0xFFu);
-				m_Data[unBase + 4] = static_cast<unsigned char>((unX >> 32) & 0xFFu);
-				m_Data[unBase + 5] = static_cast<unsigned char>((unX >> 40) & 0xFFu);
-				m_Data[unBase + 6] = static_cast<unsigned char>((unX >> 48) & 0xFFu);
-				m_Data[unBase + 7] = static_cast<unsigned char>((unX >> 56) & 0xFFu);
+				m_Data[unBase]     = static_cast<unsigned char>( unX        & 0xFF);
+				m_Data[unBase + 1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+				m_Data[unBase + 2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+				m_Data[unBase + 3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
+				m_Data[unBase + 4] = static_cast<unsigned char>((unX >> 32) & 0xFF);
+				m_Data[unBase + 5] = static_cast<unsigned char>((unX >> 40) & 0xFF);
+				m_Data[unBase + 6] = static_cast<unsigned char>((unX >> 48) & 0xFF);
+				m_Data[unBase + 7] = static_cast<unsigned char>((unX >> 56) & 0xFF);
 			}
 		}
 
@@ -524,16 +542,15 @@ namespace CryptoArrayAES {
 	};
 
 	template<unsigned long long unLine, unsigned long long unCounter>
-	constexpr void BuildAESKey(unsigned char out[32]) noexcept {
+	constexpr void BuildAESKey(block32& out) noexcept {
 		AdditionalKeyArrayAES<unLine, unCounter> extra {};
-
 		for (unsigned char i = 0; i < 32; ++i) {
 			out[i] = static_cast<unsigned char>(kBaseKey[i] ^ extra.m_Data[(i * 7) & 63] ^ extra.m_Data[(i * 13 + 5) & 63]);
 		}
 	}
 
 	template<unsigned long long unLine, unsigned long long unCounter>
-	constexpr void BuildGCMIV(unsigned char iv[12]) noexcept {
+	constexpr void BuildGCMIV(iv12& iv) noexcept {
 		constexpr unsigned long long unX = hash64(0xA1B2C3D4E5F60789ULL ^ (unLine * 0x9E3779B97F4A7C15ULL) ^ (unCounter << 1));
 		constexpr unsigned long long unY = hash64(0xCAFEBABEDEADBEEFULL ^ (unX ^ (unLine << 17)));
 
@@ -556,71 +573,75 @@ namespace CryptoArrayAES {
 
 	template<typename T>
 	struct ByteIO<T, 1> {
-		constexpr static std::array<unsigned char, 1> to(T Value) noexcept {
-			std::array<unsigned char, 1> out {{ static_cast<unsigned char>(Value) }};
-			return out;
+		static constexpr void to(T Value, unsigned char(&out)[1]) noexcept {
+			out[0] = static_cast<unsigned char>(Value);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 1>& bytes) noexcept {
-			return static_cast<T>(bytes[0]);
+		static constexpr T from(const unsigned char(&in)[1]) noexcept {
+			return static_cast<T>(in[0]);
 		}
 	};
 
 	template<typename T>
 	struct ByteIO<T, 2> {
-		constexpr static std::array<unsigned char, 2> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[2]) noexcept {
 			const unsigned short unX = static_cast<unsigned short>(Value);
-
-			std::array<unsigned char, 2> out {{
-				static_cast<unsigned char>( unX       & 0xFF),
-				static_cast<unsigned char>((unX >> 8) & 0xFF)
-			}};
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX       & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >> 8) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 2>& bytes) noexcept {
-			const unsigned short unX = static_cast<unsigned short>(bytes[0]) |
-									  (static_cast<unsigned short>(bytes[1]) << 8);
+		static constexpr T from(const unsigned char(&in)[2]) noexcept {
+			const unsigned short unX = static_cast<unsigned short>(in[0]) |
+									  (static_cast<unsigned short>(in[1]) << 8);
 			return static_cast<T>(unX);
 		}
 	};
 
 	template<typename T>
 	struct ByteIO<T, 4> {
-		constexpr static std::array<unsigned char, 4> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[4]) noexcept {
 			const unsigned int unX = static_cast<unsigned int>(Value);
-
-			std::array<unsigned char, 4> out {{
-				static_cast<unsigned char>( unX        & 0xFF),
-				static_cast<unsigned char>((unX >>  8) & 0xFF),
-				static_cast<unsigned char>((unX >> 16) & 0xFF),
-				static_cast<unsigned char>((unX >> 24) & 0xFF)
-			}};
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX        & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 4>& bytes) noexcept {
-			const unsigned int unX = static_cast<unsigned int>(bytes[0])        |
-									(static_cast<unsigned int>(bytes[1]) <<  8) |
-									(static_cast<unsigned int>(bytes[2]) << 16) |
-									(static_cast<unsigned int>(bytes[3]) << 24);
+		static constexpr T from(const unsigned char(&in)[4]) noexcept {
+			const unsigned int unX = static_cast<unsigned int>(in[0])        |
+									(static_cast<unsigned int>(in[1]) <<  8) |
+									(static_cast<unsigned int>(in[2]) << 16) |
+									(static_cast<unsigned int>(in[3]) << 24);
 			return static_cast<T>(unX);
 		}
 	};
 
-	template <typename T>
-	constexpr std::array<unsigned char, sizeof(T)> ToBytes(T Value) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::to(Value);
-	}
+	template<typename T>
+	struct ByteIO<T, 8> {
+		static constexpr void to(T Value, unsigned char(&out)[8]) noexcept {
+			const unsigned long long unX = static_cast<unsigned long long>(Value);
+			out[0] = static_cast<unsigned char>( unX        & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
+			out[4] = static_cast<unsigned char>((unX >> 32) & 0xFF);
+			out[5] = static_cast<unsigned char>((unX >> 40) & 0xFF);
+			out[6] = static_cast<unsigned char>((unX >> 48) & 0xFF);
+			out[7] = static_cast<unsigned char>((unX >> 56) & 0xFF);
+		}
 
-	template <typename T>
-	constexpr T FromBytes(const std::array<unsigned char, sizeof(T)>& bytes) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::from(bytes);
-	}
+		static constexpr T from(const unsigned char(&in)[8]) noexcept {
+			const unsigned long long unX = static_cast<unsigned long long>(in[0])        |
+										  (static_cast<unsigned long long>(in[1]) <<  8) |
+										  (static_cast<unsigned long long>(in[2]) << 16) |
+										  (static_cast<unsigned long long>(in[3]) << 24) |
+										  (static_cast<unsigned long long>(in[4]) << 32) |
+										  (static_cast<unsigned long long>(in[5]) << 40) |
+										  (static_cast<unsigned long long>(in[6]) << 48) |
+										  (static_cast<unsigned long long>(in[7]) << 56);
+			return static_cast<T>(unX);
+		}
+	};
 
 	template <unsigned long long unLength, typename T, unsigned long long unLine = 0, unsigned long long unCounter = 0>
 	class CryptoArrayAES {
@@ -635,26 +656,28 @@ namespace CryptoArrayAES {
 		};
 
 		static constexpr EncryptedBlob MakeBlob(const T* pData) noexcept {
-			std::array<unsigned char, 32> rawkey {};
-			BuildAESKey<unLine, unCounter>(rawkey.data());
-
-			std::array<unsigned char, 12> iv {};
-			BuildGCMIV<unLine, unCounter>(iv.data());
+			using CT = clean_type<T>;
+			static_assert(std::is_trivially_copyable_v<CT>, "T must be trivially copyable");
+			static_assert(std::is_integral_v<CT> || std::is_enum_v<CT>, "T must be integral or enum");
+			static_assert(sizeof(CT) == 1 || sizeof(CT) == 2 || sizeof(CT) == 4 || sizeof(CT) == 8, "Supported sizes: 1/2/4/8 bytes");
 
 			block32 key {};
-			for (unsigned char i = 0; i < 32; ++i) {
-				key[i] = rawkey[i];
-			}
+			BuildAESKey<unLine, unCounter>(key);
 
-			std::array<unsigned char, kPlainBytes> plaintext {};
+			iv12 iv {};
+			BuildGCMIV<unLine, unCounter>(iv);
+
+			unsigned char plaintext[kPlainBytes] {};
 			for (std::size_t i = 0; i < kLength; ++i) {
-				auto bytes = ToBytes<T>(pData[i]);
+				unsigned char bytes[sizeof(T)] {};
+				ByteIO<T, sizeof(T)>::to(pData[i], bytes);
+
 				for (std::size_t b = 0; b < sizeof(T); ++b) {
 					plaintext[i * sizeof(T) + b] = bytes[b];
 				}
 			}
 
-			const auto encrypted = GCMEncrypt<kPlainBytes, kAAD.size()>(plaintext.data(), kAAD.data(), key, iv);
+			const auto encrypted = GCMEncrypt<kPlainBytes, kAADSize>(plaintext, kAAD, key, iv);
 
 			EncryptedBlob blob {};
 
@@ -679,15 +702,10 @@ namespace CryptoArrayAES {
 		class DecryptedArray {
 		public:
 			_CRYPTOARRAYAES_FORCE_INLINE explicit DecryptedArray(const CryptoArrayAES& self) noexcept {
-				std::array<unsigned char, 32> rawkey {};
-				BuildAESKey<unLine, unCounter>(rawkey.data());
-
 				block32 key {};
-				for (unsigned char i = 0; i < 32; ++i) {
-					key[i] = rawkey[i];
-				}
+				BuildAESKey<unLine, unCounter>(key);
 
-				std::array<unsigned char, 12> iv {};
+				iv12 iv {};
 				for (unsigned char i = 0; i < 12; ++i) {
 					iv[i] = self.m_EncryptedBlob.m_IV[i];
 				}
@@ -697,19 +715,19 @@ namespace CryptoArrayAES {
 					tag[i] = self.m_EncryptedBlob.m_Tag[i];
 				}
 
-				std::array<unsigned char, kPlainBytes> plaintext {};
-				if (!GCMDecrypt(self.m_EncryptedBlob.m_CipherText, kPlainBytes, CryptoStringAES::kAAD.data(), CryptoStringAES::kAAD.size(), tag, key, iv, plaintext.data())) {
+				unsigned char plaintext[kPlainBytes] {};
+				if (!GCMDecrypt(self.m_EncryptedBlob.m_CipherText, kPlainBytes, kAAD, kAADSize, tag, key, iv, plaintext)) {
 					Clear();
 					return;
 				}
 
 				for (std::size_t i = 0; i < kLength; ++i) {
-					std::array<unsigned char, sizeof(T)> bytes {};
+					unsigned char bytes[sizeof(T)] {};
 					for (std::size_t j = 0; j < sizeof(T); ++j) {
 						bytes[j] = plaintext[i * sizeof(T) + j];
 					}
 
-					m_pBuffer[i] = FromBytes<T>(bytes);
+					m_Buffer[i] = ByteIO<T, sizeof(T)>::from(bytes);
 				}
 			}
 
@@ -722,7 +740,7 @@ namespace CryptoArrayAES {
 
 			_CRYPTOARRAYAES_FORCE_INLINE DecryptedArray(DecryptedArray&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
-					m_pBuffer[i] = other.m_pBuffer[i];
+					m_Buffer[i] = other.m_Buffer[i];
 				}
 
 				other.Clear();
@@ -731,7 +749,7 @@ namespace CryptoArrayAES {
 			_CRYPTOARRAYAES_FORCE_INLINE DecryptedArray& operator=(DecryptedArray&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
-						m_pBuffer[i] = other.m_pBuffer[i];
+						m_Buffer[i] = other.m_Buffer[i];
 					}
 
 					other.Clear();
@@ -740,28 +758,30 @@ namespace CryptoArrayAES {
 				return *this;
 			}
 
-			_CRYPTOARRAYAES_FORCE_INLINE T* data() noexcept { return m_pBuffer; }
-			_CRYPTOARRAYAES_FORCE_INLINE const T* data() const noexcept { return m_pBuffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE T* data() noexcept { return m_Buffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* data() const noexcept { return m_Buffer; }
 			_CRYPTOARRAYAES_FORCE_INLINE std::size_t size() const noexcept { return kLength; }
-			_CRYPTOARRAYAES_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_pBuffer[idx]; }
-			_CRYPTOARRAYAES_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_pBuffer[idx]; }
-			_CRYPTOARRAYAES_FORCE_INLINE T* begin() noexcept { return m_pBuffer; }
-			_CRYPTOARRAYAES_FORCE_INLINE T* end() noexcept { return m_pBuffer + kLength; }
-			_CRYPTOARRAYAES_FORCE_INLINE const T* begin() const noexcept { return m_pBuffer; }
-			_CRYPTOARRAYAES_FORCE_INLINE const T* end() const noexcept { return m_pBuffer + kLength; }
+
+			_CRYPTOARRAYAES_FORCE_INLINE T& operator[](std::size_t idx) noexcept { return m_Buffer[idx]; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T& operator[](std::size_t idx) const noexcept { return m_Buffer[idx]; }
+
+			_CRYPTOARRAYAES_FORCE_INLINE T* begin() noexcept { return m_Buffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE T* end() noexcept { return m_Buffer + kLength; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* begin() const noexcept { return m_Buffer; }
+			_CRYPTOARRAYAES_FORCE_INLINE const T* end() const noexcept { return m_Buffer + kLength; }
 
 			_CRYPTOARRAYAES_FORCE_INLINE operator T* () noexcept { return data(); }
 			_CRYPTOARRAYAES_FORCE_INLINE operator const T* () const noexcept { return data(); }
 
 		private:
 			_CRYPTOARRAYAES_FORCE_INLINE void Clear() noexcept {
-				volatile T* p = m_pBuffer;
+				volatile T* p = m_Buffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					p[i] = T {};
 				}
 			}
 
-			T m_pBuffer[kLength] {};
+			T m_Buffer[kLength] {};
 		};
 
 		_CRYPTOARRAYAES_FORCE_INLINE constexpr CryptoArrayAES(const T* pData) noexcept : m_EncryptedBlob(kBlobFrom(pData)) {}
@@ -775,20 +795,15 @@ namespace CryptoArrayAES {
 	_CRYPTOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const T(&arr)[N]) noexcept {
 		return CryptoArrayAES<N, T, unLine, unCounter>(arr);
 	}
-
-	template<unsigned long long unLine, unsigned long long unCounter, typename T, std::size_t N>
-	_CRYPTOARRAYAES_FORCE_INLINE constexpr auto MakeCryptoArray(const std::array<T, N>& arr) noexcept {
-		return CryptoArrayAES<N, T, unLine, unCounter>(arr.data());
-	}
 }
 
-#define _CRYPTOARRAYAES(A)                                                                    \
-	([&]() -> auto {                                                                          \
-		constexpr auto Encrypted = CryptoArrayAES::MakeCryptoArray<__LINE__, __COUNTER__>(A); \
-		return Encrypted.Decrypt();                                                           \
+#define _CRYPTOARRAYAES(ARRAY)                                                                    \
+	([]() -> auto {                                                                               \
+		constexpr auto Encrypted = CryptoArrayAES::MakeCryptoArray<__LINE__, __COUNTER__>(ARRAY); \
+		return Encrypted.Decrypt();                                                               \
 	} ())
 
-#define CRYPTOARRAYAES(A) _CRYPTOARRAYAES(A)
+#define CRYPTOARRAYAES(ARRAY) _CRYPTOARRAYAES(ARRAY)
 
 #undef _CRYPTOARRAYAES_FORCE_INLINE
 #undef _CRYPTOARRAYAES_NO_INLINE

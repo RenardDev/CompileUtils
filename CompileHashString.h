@@ -5,8 +5,6 @@
 
 // STL
 #include <type_traits>
-#include <array>
-#include <string>
 
 // ----------------------------------------------------------------
 // CRC
@@ -82,7 +80,7 @@ namespace CRC {
 	};
 
 	constexpr static const unsigned int kCRC32Table[256] = {
-			0x00000000ul, 0x77073096ul, 0xEE0E612Cul, 0x990951BAul,
+		0x00000000ul, 0x77073096ul, 0xEE0E612Cul, 0x990951BAul,
 		0x076DC419ul, 0x706AF48Ful, 0xE963A535ul, 0x9E6495A3ul,
 		0x0EDB8832ul, 0x79DCB8A4ul, 0xE0D5E91Eul, 0x97D2D988ul,
 		0x09B64C2Bul, 0x7EB17CBDul, 0xE7B82D07ul, 0x90BF1D91ul,
@@ -148,76 +146,53 @@ namespace CRC {
 		0xB40BBE37ul, 0xC30C8EA1ul, 0x5A05DF1Bul, 0x2D02EF8Dul
 	};
 
-	template<typename T, std::size_t N>
+	template <typename T, std::size_t N>
 	struct ByteIO;
 
-	template<typename T>
+	template <typename T>
 	struct ByteIO<T, 1> {
-		constexpr static std::array<unsigned char, 1> to(T Value) noexcept {
-			std::array<unsigned char, 1> out{ { static_cast<unsigned char>(Value) } };
-			return out;
+		static constexpr void to(T Value, unsigned char(&out)[1]) noexcept {
+			out[0] = static_cast<unsigned char>(Value);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 1>& bytes) noexcept {
-			return static_cast<T>(bytes[0]);
+		static constexpr T from(const unsigned char(&in)[1]) noexcept {
+			return static_cast<T>(in[0]);
 		}
 	};
 
-	template<typename T>
+	template <typename T>
 	struct ByteIO<T, 2> {
-		constexpr static std::array<unsigned char, 2> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[2]) noexcept {
 			const unsigned short unX = static_cast<unsigned short>(Value);
-
-			std::array<unsigned char, 2> out{ {
-				static_cast<unsigned char>(unX & 0xFF),
-				static_cast<unsigned char>((unX >> 8) & 0xFF)
-			} };
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX       & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >> 8) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 2>& bytes) noexcept {
-			const unsigned short unX = static_cast<unsigned short>(bytes[0]) |
-				(static_cast<unsigned short>(bytes[1]) << 8);
+		static constexpr T from(const unsigned char(&in)[2]) noexcept {
+			const unsigned short unX = static_cast<unsigned short>(in[0]) |
+									  (static_cast<unsigned short>(in[1]) << 8);
 			return static_cast<T>(unX);
 		}
 	};
 
-	template<typename T>
+	template <typename T>
 	struct ByteIO<T, 4> {
-		constexpr static std::array<unsigned char, 4> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[4]) noexcept {
 			const unsigned int unX = static_cast<unsigned int>(Value);
-
-			std::array<unsigned char, 4> out{ {
-				static_cast<unsigned char>(unX & 0xFF),
-				static_cast<unsigned char>((unX >> 8) & 0xFF),
-				static_cast<unsigned char>((unX >> 16) & 0xFF),
-				static_cast<unsigned char>((unX >> 24) & 0xFF)
-			} };
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX        & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >> 8)  & 0xFF);
+			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 4>& bytes) noexcept {
-			const unsigned int unX = static_cast<unsigned int>(bytes[0]) |
-				(static_cast<unsigned int>(bytes[1]) << 8) |
-				(static_cast<unsigned int>(bytes[2]) << 16) |
-				(static_cast<unsigned int>(bytes[3]) << 24);
+		static constexpr T from(const unsigned char(&in)[4]) noexcept {
+			const unsigned int unX = static_cast<unsigned int>(in[0])        |
+									(static_cast<unsigned int>(in[1]) <<  8) |
+									(static_cast<unsigned int>(in[2]) << 16) |
+									(static_cast<unsigned int>(in[3]) << 24);
 			return static_cast<T>(unX);
 		}
 	};
-
-	template <typename T>
-	constexpr std::array<unsigned char, sizeof(T)> ToBytes(T Value) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::to(Value);
-	}
-
-	template <typename T>
-	constexpr T FromBytes(const std::array<unsigned char, sizeof(T)>& bytes) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::from(bytes);
-	}
 
 	template <typename CharT>
 	constexpr unsigned long long CRC64(const CharT* s, std::size_t unSize) noexcept {
@@ -225,9 +200,12 @@ namespace CRC {
 		static_assert(sizeof(CharT) == 1 || sizeof(CharT) == 2 || sizeof(CharT) == 4, "Unsupported character size (expected 1, 2, or 4 bytes)");
 
 		unsigned long long unH = 0xFFFFFFFFFFFFFFFFull;
+
 		for (std::size_t i = 0; i < unSize; ++i) {
-			const auto bytes = ToBytes<CharT>(s[i]);
-			for (std::size_t k = 0; k < bytes.size(); ++k) {
+			unsigned char bytes[sizeof(CharT)] {};
+			ByteIO<CharT, sizeof(CharT)>::to(s[i], bytes);
+
+			for (std::size_t k = 0; k < sizeof(CharT); ++k) {
 				unH = kCRC64Table[(bytes[k] ^ static_cast<unsigned char>(unH & 0xFF))] ^ (unH >> 8);
 			}
 		}
@@ -241,9 +219,12 @@ namespace CRC {
 		static_assert(sizeof(CharT) == 1 || sizeof(CharT) == 2 || sizeof(CharT) == 4, "Unsupported character size (expected 1, 2, or 4 bytes)");
 
 		unsigned int unH = 0xFFFFFFFFul;
+
 		for (std::size_t i = 0; i < unSize; ++i) {
-			const auto bytes = ToBytes<CharT>(s[i]);
-			for (std::size_t k = 0; k < bytes.size(); ++k) {
+			unsigned char bytes[sizeof(CharT)] {};
+			ByteIO<CharT, sizeof(CharT)>::to(s[i], bytes);
+
+			for (std::size_t k = 0; k < sizeof(CharT); ++k) {
 				unH = kCRC32Table[(bytes[k] ^ static_cast<unsigned char>(unH & 0xFF))] ^ (unH >> 8);
 			}
 		}
@@ -259,16 +240,6 @@ namespace CRC {
 	template <typename CharT, std::size_t N>
 	constexpr unsigned int CRC32(const CharT(&s)[N]) noexcept {
 		return CRC32(s, N ? (N - 1) : 0);
-	}
-
-	template <typename CharT, typename Traits, typename Alloc>
-	inline unsigned long long CRC64(const std::basic_string<CharT, Traits, Alloc>& str) noexcept {
-		return CRC64(str.data(), str.size());
-	}
-
-	template <typename CharT, typename Traits, typename Alloc>
-	inline unsigned int CRC32(const std::basic_string<CharT, Traits, Alloc>& str) noexcept {
-		return CRC32(str.data(), str.size());
 	}
 }
 

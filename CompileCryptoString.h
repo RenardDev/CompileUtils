@@ -5,7 +5,6 @@
 
 // STL
 #include <type_traits>
-#include <array>
 
 // CompileTimeStamp
 #define COMPILETIMESTAMP_USE_64BIT
@@ -32,8 +31,8 @@
 
 namespace CryptoString {
 
-	template<class _Ty>
-	using clean_type = typename std::remove_const_t<std::remove_reference_t<_Ty>>;
+	template<class T>
+	using clean_type = std::remove_const_t<std::remove_reference_t<T>>;
 
 	constexpr unsigned int rotl32(unsigned int unX, unsigned int unN) noexcept {
 		return (unX << unN) | (unX >> (32 - unN));
@@ -90,35 +89,35 @@ namespace CryptoString {
 
 	constexpr static unsigned char kBaseKey[32] = {
 		static_cast<unsigned char>( s6.s0        & 0xFF),
-		static_cast<unsigned char>((s6.s0 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s0 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s0 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s0 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s1        & 0xFF),
-		static_cast<unsigned char>((s6.s1 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s1 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s1 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s1 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s2        & 0xFF),
-		static_cast<unsigned char>((s6.s2 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s2 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s2 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s2 >> 24) & 0xFF),
 		static_cast<unsigned char>( s6.s3        & 0xFF),
-		static_cast<unsigned char>((s6.s3 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s6.s3 >>  8) & 0xFF),
 		static_cast<unsigned char>((s6.s3 >> 16) & 0xFF),
 		static_cast<unsigned char>((s6.s3 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s0        & 0xFF),
-		static_cast<unsigned char>((s7.s0 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s0 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s0 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s0 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s1        & 0xFF),
-		static_cast<unsigned char>((s7.s1 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s1 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s1 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s1 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s2        & 0xFF),
-		static_cast<unsigned char>((s7.s2 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s2 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s2 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s2 >> 24) & 0xFF),
 		static_cast<unsigned char>( s7.s3        & 0xFF),
-		static_cast<unsigned char>((s7.s3 >> 8)  & 0xFF),
+		static_cast<unsigned char>((s7.s3 >>  8) & 0xFF),
 		static_cast<unsigned char>((s7.s3 >> 16) & 0xFF),
 		static_cast<unsigned char>((s7.s3 >> 24) & 0xFF)
 	};
@@ -126,29 +125,28 @@ namespace CryptoString {
 	template<unsigned long long unLine, unsigned long long unCounter>
 	class AdditionalKeyArray {
 	public:
-		constexpr AdditionalKeyArray() {
-			constexpr unsigned long long unA = hash64(rotr64(unLine,          13));
+		constexpr AdditionalKeyArray() noexcept {
+			constexpr unsigned long long unA = hash64(rotr64(unLine, 13));
 			constexpr unsigned long long unB = hash64(rotr64(unA ^ unCounter, 31));
-			constexpr unsigned long long unC = hash64(rotr64(unB + unLine,    17));
+			constexpr unsigned long long unC = hash64(rotr64(unB + unLine, 17));
 			constexpr unsigned long long unD = hash64(rotr64(unC ^ unCounter, 47));
-			constexpr unsigned long long unE = hash64(rotr64(unD ^ unLine,    23));
+			constexpr unsigned long long unE = hash64(rotr64(unD ^ unLine, 23));
 			constexpr unsigned long long unF = hash64(rotr64(unE + unCounter, 37));
 
-			const unsigned long long kSelection[6] = { unA, unB, unC, unD, unE, unF };
+			constexpr unsigned long long kSelection[6] = { unA, unB, unC, unD, unE, unF };
 
-			for (unsigned char i = 0;i < 8;++i) {
+			for (unsigned char i = 0; i < 8; ++i) {
 				const unsigned long long unX = (i < 5) ? kSelection[i] : (unF * i);
-
 				const unsigned char unBase = static_cast<unsigned char>(i << 3);
 
-				m_Data[unBase]     = static_cast<unsigned char>( unX        & 0xFFu);
-				m_Data[unBase + 1] = static_cast<unsigned char>((unX >>  8) & 0xFFu);
-				m_Data[unBase + 2] = static_cast<unsigned char>((unX >> 16) & 0xFFu);
-				m_Data[unBase + 3] = static_cast<unsigned char>((unX >> 24) & 0xFFu);
-				m_Data[unBase + 4] = static_cast<unsigned char>((unX >> 32) & 0xFFu);
-				m_Data[unBase + 5] = static_cast<unsigned char>((unX >> 40) & 0xFFu);
-				m_Data[unBase + 6] = static_cast<unsigned char>((unX >> 48) & 0xFFu);
-				m_Data[unBase + 7] = static_cast<unsigned char>((unX >> 56) & 0xFFu);
+				m_Data[unBase]     = static_cast<unsigned char>( unX        & 0xFF);
+				m_Data[unBase + 1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+				m_Data[unBase + 2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+				m_Data[unBase + 3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
+				m_Data[unBase + 4] = static_cast<unsigned char>((unX >> 32) & 0xFF);
+				m_Data[unBase + 5] = static_cast<unsigned char>((unX >> 40) & 0xFF);
+				m_Data[unBase + 6] = static_cast<unsigned char>((unX >> 48) & 0xFF);
+				m_Data[unBase + 7] = static_cast<unsigned char>((unX >> 56) & 0xFF);
 			}
 		}
 
@@ -161,71 +159,75 @@ namespace CryptoString {
 
 	template<typename T>
 	struct ByteIO<T, 1> {
-		constexpr static std::array<unsigned char, 1> to(T Value) noexcept {
-			std::array<unsigned char, 1> out {{ static_cast<unsigned char>(Value) }};
-			return out;
+		static constexpr void to(T Value, unsigned char(&out)[1]) noexcept {
+			out[0] = static_cast<unsigned char>(Value);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 1>& bytes) noexcept {
-			return static_cast<T>(bytes[0]);
+		static constexpr T from(const unsigned char(&in)[1]) noexcept {
+			return static_cast<T>(in[0]);
 		}
 	};
 
 	template<typename T>
 	struct ByteIO<T, 2> {
-		constexpr static std::array<unsigned char, 2> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[2]) noexcept {
 			const unsigned short unX = static_cast<unsigned short>(Value);
-
-			std::array<unsigned char, 2> out {{
-				static_cast<unsigned char>( unX       & 0xFF),
-				static_cast<unsigned char>((unX >> 8) & 0xFF)
-			}};
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX       & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >> 8) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 2>& bytes) noexcept {
-			const unsigned short unX = static_cast<unsigned short>(bytes[0]) |
-									  (static_cast<unsigned short>(bytes[1]) << 8);
+		static constexpr T from(const unsigned char(&in)[2]) noexcept {
+			const unsigned short unX = static_cast<unsigned short>(in[0]) |
+									  (static_cast<unsigned short>(in[1]) << 8);
 			return static_cast<T>(unX);
 		}
 	};
 
 	template<typename T>
 	struct ByteIO<T, 4> {
-		constexpr static std::array<unsigned char, 4> to(T Value) noexcept {
+		static constexpr void to(T Value, unsigned char(&out)[4]) noexcept {
 			const unsigned int unX = static_cast<unsigned int>(Value);
-
-			std::array<unsigned char, 4> out {{
-				static_cast<unsigned char>( unX        & 0xFF),
-				static_cast<unsigned char>((unX >>  8) & 0xFF),
-				static_cast<unsigned char>((unX >> 16) & 0xFF),
-				static_cast<unsigned char>((unX >> 24) & 0xFF)
-			}};
-
-			return out;
+			out[0] = static_cast<unsigned char>( unX        & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
 		}
 
-		constexpr static T from(const std::array<unsigned char, 4>& bytes) noexcept {
-			const unsigned int unX = static_cast<unsigned int>(bytes[0])        |
-									(static_cast<unsigned int>(bytes[1]) <<  8) |
-									(static_cast<unsigned int>(bytes[2]) << 16) |
-									(static_cast<unsigned int>(bytes[3]) << 24);
+		static constexpr T from(const unsigned char(&in)[4]) noexcept {
+			const unsigned int unX = static_cast<unsigned int>(in[0])        |
+									(static_cast<unsigned int>(in[1]) <<  8) |
+									(static_cast<unsigned int>(in[2]) << 16) |
+									(static_cast<unsigned int>(in[3]) << 24);
 			return static_cast<T>(unX);
 		}
 	};
 
-	template <typename T>
-	constexpr std::array<unsigned char, sizeof(T)> ToBytes(T Value) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::to(Value);
-	}
+	template<typename T>
+	struct ByteIO<T, 8> {
+		static constexpr void to(T Value, unsigned char(&out)[8]) noexcept {
+			const unsigned long long unX = static_cast<unsigned long long>(Value);
+			out[0] = static_cast<unsigned char>( unX        & 0xFF);
+			out[1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
+			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
+			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
+			out[4] = static_cast<unsigned char>((unX >> 32) & 0xFF);
+			out[5] = static_cast<unsigned char>((unX >> 40) & 0xFF);
+			out[6] = static_cast<unsigned char>((unX >> 48) & 0xFF);
+			out[7] = static_cast<unsigned char>((unX >> 56) & 0xFF);
+		}
 
-	template <typename T>
-	constexpr T FromBytes(const std::array<unsigned char, sizeof(T)>& bytes) noexcept {
-		static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4, "Unsupported character size");
-		return ByteIO<T, sizeof(T)>::from(bytes);
-	}
+		static constexpr T from(const unsigned char(&in)[8]) noexcept {
+			const unsigned long long unX = static_cast<unsigned long long>(in[0]) |
+										  (static_cast<unsigned long long>(in[1]) <<  8) |
+										  (static_cast<unsigned long long>(in[2]) << 16) |
+										  (static_cast<unsigned long long>(in[3]) << 24) |
+										  (static_cast<unsigned long long>(in[4]) << 32) |
+										  (static_cast<unsigned long long>(in[5]) << 40) |
+										  (static_cast<unsigned long long>(in[6]) << 48) |
+										  (static_cast<unsigned long long>(in[7]) << 56);
+			return static_cast<T>(unX);
+		}
+	};
 
 	template <unsigned long long unLength, typename T, unsigned long long unLine = 0, unsigned long long unCounter = 0>
 	class CryptoString {
@@ -240,13 +242,14 @@ namespace CryptoString {
 				AdditionalKeyArray<unLine, unCounter> AdditionalKey {};
 
 				for (std::size_t i = 0; i < kLength; ++i) {
-					std::array<unsigned char, sizeof(T)> tmp {};
+					unsigned char tmp[sizeof(T)] {};
+
 					for (std::size_t k = 0; k < sizeof(T); ++k) {
 						const std::size_t j = i * sizeof(T) + k;
-						tmp[k] = EncryptedString.m_pStorage[j] ^ kBaseKey[j % sizeof(kBaseKey)] ^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)];
+						tmp[k] = EncryptedString.m_Storage[j] ^ kBaseKey[j % sizeof(kBaseKey)] ^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)];
 					}
 
-					m_pBuffer[i] = FromBytes<T>(tmp);
+					m_Buffer[i] = ByteIO<T, sizeof(T)>::from(tmp);
 				}
 			}
 
@@ -259,7 +262,7 @@ namespace CryptoString {
 
 			_CRYPTOSTRING_FORCE_INLINE DecryptedString(DecryptedString&& other) noexcept {
 				for (std::size_t i = 0; i < kLength; ++i) {
-					m_pBuffer[i] = other.m_pBuffer[i];
+					m_Buffer[i] = other.m_Buffer[i];
 				}
 
 				other.Clear();
@@ -268,7 +271,7 @@ namespace CryptoString {
 			_CRYPTOSTRING_FORCE_INLINE DecryptedString& operator=(DecryptedString&& other) noexcept {
 				if (this != &other) {
 					for (std::size_t i = 0; i < kLength; ++i) {
-						m_pBuffer[i] = other.m_pBuffer[i];
+						m_Buffer[i] = other.m_Buffer[i];
 					}
 
 					other.Clear();
@@ -277,30 +280,38 @@ namespace CryptoString {
 				return *this;
 			}
 
-			_CRYPTOSTRING_FORCE_INLINE T* get() noexcept { return m_pBuffer; }
+			_CRYPTOSTRING_FORCE_INLINE T* get() noexcept { return m_Buffer; }
+			_CRYPTOSTRING_FORCE_INLINE const T* c_str() const noexcept { return m_Buffer; }
+
 			_CRYPTOSTRING_FORCE_INLINE operator T* () noexcept { return get(); }
-			_CRYPTOSTRING_FORCE_INLINE const T* c_str() const noexcept { return m_pBuffer; }
 			_CRYPTOSTRING_FORCE_INLINE operator const T* () const noexcept { return c_str(); }
 
 		private:
 			_CRYPTOSTRING_FORCE_INLINE void Clear() noexcept {
-				volatile T* pData = m_pBuffer;
+				volatile T* pData = m_Buffer;
 				for (std::size_t i = 0; i < kLength; ++i) {
 					pData[i] = T {};
 				}
 			}
 
-			T m_pBuffer[kLength] {};
+			T m_Buffer[kLength] {};
 		};
 
-		_CRYPTOSTRING_FORCE_INLINE constexpr CryptoString(T* pData) noexcept {
+		_CRYPTOSTRING_FORCE_INLINE constexpr CryptoString(const T* pData) noexcept {
+			using CT = clean_type<T>;
+			static_assert(std::is_trivially_copyable_v<CT>, "T must be trivially copyable");
+			static_assert(std::is_integral_v<CT> || std::is_enum_v<CT>, "T must be integral or enum");
+			static_assert(sizeof(CT) == 1 || sizeof(CT) == 2 || sizeof(CT) == 4 || sizeof(CT) == 8, "Supported sizes: 1/2/4/8 bytes");
+
 			AdditionalKeyArray<unLine, unCounter> AdditionalKey {};
 
 			for (std::size_t i = 0; i < kLength; ++i) {
-				const auto bytes = ToBytes<T>(pData[i]);
+				unsigned char bytes[sizeof(T)] {};
+				ByteIO<T, sizeof(T)>::to(pData[i], bytes);
+
 				for (std::size_t k = 0; k < sizeof(T); ++k) {
 					const std::size_t j = i * sizeof(T) + k;
-					m_pStorage[j] = static_cast<unsigned char>(bytes[k] ^ kBaseKey[j % sizeof(kBaseKey)] ^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)]);
+					m_Storage[j] = static_cast<unsigned char>(bytes[k] ^ kBaseKey[j % sizeof(kBaseKey)] ^ AdditionalKey.m_Data[j % sizeof(AdditionalKey.m_Data)]);
 				}
 			}
 		}
@@ -310,18 +321,18 @@ namespace CryptoString {
 		}
 
 	private:
-		unsigned char m_pStorage[kPlainBytes] {};
+		unsigned char m_Storage[kPlainBytes] {};
 	};
 }
 
-#define _CRYPTOSTRING(S)                                                                                                                                                                            \
-	([]() -> auto {                                                                                                                                                                                 \
-		constexpr size_t unLength = std::extent_v<std::remove_reference_t<decltype(S)>>;                                                                                                            \
-		constexpr auto Encrypted = CryptoString::CryptoString<unLength, CryptoString::clean_type<decltype(S[0])>, __LINE__, __COUNTER__>(const_cast<CryptoString::clean_type<decltype(S[0])>*>(S)); \
-		return Encrypted.Decrypt();                                                                                                                                                                 \
+#define _CRYPTOSTRING(STRING)                                                                                                                              \
+	([]() -> auto {                                                                                                                                        \
+		constexpr size_t unLength = std::extent_v<std::remove_reference_t<decltype(STRING)>>;                                                              \
+		constexpr auto Encrypted = CryptoString::CryptoString<unLength, CryptoString::clean_type<decltype((STRING)[0])>, __LINE__, __COUNTER__>((STRING)); \
+		return Encrypted.Decrypt();                                                                                                                        \
 	} ())
 
-#define CRYPTOSTRING(S) _CRYPTOSTRING(S)
+#define CRYPTOSTRING(STRING) _CRYPTOSTRING(STRING)
 
 #undef _CRYPTOSTRING_FORCE_INLINE
 #undef _CRYPTOSTRING_NO_INLINE
