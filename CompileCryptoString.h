@@ -202,33 +202,6 @@ namespace CryptoString {
 		}
 	};
 
-	template<typename T>
-	struct ByteIO<T, 8> {
-		static constexpr void to(T Value, unsigned char(&out)[8]) noexcept {
-			const unsigned long long unX = static_cast<unsigned long long>(Value);
-			out[0] = static_cast<unsigned char>( unX        & 0xFF);
-			out[1] = static_cast<unsigned char>((unX >>  8) & 0xFF);
-			out[2] = static_cast<unsigned char>((unX >> 16) & 0xFF);
-			out[3] = static_cast<unsigned char>((unX >> 24) & 0xFF);
-			out[4] = static_cast<unsigned char>((unX >> 32) & 0xFF);
-			out[5] = static_cast<unsigned char>((unX >> 40) & 0xFF);
-			out[6] = static_cast<unsigned char>((unX >> 48) & 0xFF);
-			out[7] = static_cast<unsigned char>((unX >> 56) & 0xFF);
-		}
-
-		static constexpr T from(const unsigned char(&in)[8]) noexcept {
-			const unsigned long long unX = static_cast<unsigned long long>(in[0]) |
-										  (static_cast<unsigned long long>(in[1]) <<  8) |
-										  (static_cast<unsigned long long>(in[2]) << 16) |
-										  (static_cast<unsigned long long>(in[3]) << 24) |
-										  (static_cast<unsigned long long>(in[4]) << 32) |
-										  (static_cast<unsigned long long>(in[5]) << 40) |
-										  (static_cast<unsigned long long>(in[6]) << 48) |
-										  (static_cast<unsigned long long>(in[7]) << 56);
-			return static_cast<T>(unX);
-		}
-	};
-
 	template <unsigned long long unLength, typename T, unsigned long long unLine = 0, unsigned long long unCounter = 0>
 	class CryptoString {
 	private:
@@ -301,7 +274,7 @@ namespace CryptoString {
 			using CT = clean_type<T>;
 			static_assert(std::is_trivially_copyable_v<CT>, "T must be trivially copyable");
 			static_assert(std::is_integral_v<CT> || std::is_enum_v<CT>, "T must be integral or enum");
-			static_assert(sizeof(CT) == 1 || sizeof(CT) == 2 || sizeof(CT) == 4 || sizeof(CT) == 8, "Supported sizes: 1/2/4/8 bytes");
+			static_assert((sizeof(CT) == 1) || (sizeof(CT) == 2) || (sizeof(CT) == 4), "Supported sizes: 1/2/4 bytes");
 
 			AdditionalKeyArray<unLine, unCounter> AdditionalKey {};
 

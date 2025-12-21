@@ -659,7 +659,7 @@ namespace CryptoArrayAES {
 			using CT = clean_type<T>;
 			static_assert(std::is_trivially_copyable_v<CT>, "T must be trivially copyable");
 			static_assert(std::is_integral_v<CT> || std::is_enum_v<CT>, "T must be integral or enum");
-			static_assert(sizeof(CT) == 1 || sizeof(CT) == 2 || sizeof(CT) == 4 || sizeof(CT) == 8, "Supported sizes: 1/2/4/8 bytes");
+			static_assert((sizeof(CT) == 1) || (sizeof(CT) == 2) || (sizeof(CT) == 4) || (sizeof(CT) == 8), "Supported sizes: 1/2/4/8 bytes");
 
 			block32 key {};
 			BuildAESKey<unLine, unCounter>(key);

@@ -197,7 +197,7 @@ namespace CRC {
 	template <typename CharT>
 	constexpr unsigned long long CRC64(const CharT* s, std::size_t unSize) noexcept {
 		static_assert(std::is_integral<CharT>::value, "CharT must be an integral character type");
-		static_assert(sizeof(CharT) == 1 || sizeof(CharT) == 2 || sizeof(CharT) == 4, "Unsupported character size (expected 1, 2, or 4 bytes)");
+		static_assert((sizeof(CharT) == 1) || (sizeof(CharT) == 2) || (sizeof(CharT) == 4), "Unsupported character size (expected 1, 2, or 4 bytes)");
 
 		unsigned long long unH = 0xFFFFFFFFFFFFFFFFull;
 
@@ -216,7 +216,7 @@ namespace CRC {
 	template <typename CharT>
 	constexpr unsigned int CRC32(const CharT* s, std::size_t unSize) noexcept {
 		static_assert(std::is_integral<CharT>::value, "CharT must be an integral character type");
-		static_assert(sizeof(CharT) == 1 || sizeof(CharT) == 2 || sizeof(CharT) == 4, "Unsupported character size (expected 1, 2, or 4 bytes)");
+		static_assert((sizeof(CharT) == 1) || (sizeof(CharT) == 2) || (sizeof(CharT) == 4), "Unsupported character size (expected 1, 2, or 4 bytes)");
 
 		unsigned int unH = 0xFFFFFFFFul;
 
